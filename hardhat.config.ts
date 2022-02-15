@@ -1,8 +1,9 @@
 // hardhat.config.ts
 
 import "dotenv/config"
-import "@nomiclabs/hardhat-solhint"
-import "@nomiclabs/hardhat-waffle"
+import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-waffle";
+import "@nomiclabs/hardhat-ganache";
 import "hardhat-abi-exporter"
 import "hardhat-deploy"
 import "hardhat-deploy-ethers"
@@ -15,8 +16,17 @@ import "./tasks"
 
 import { HardhatUserConfig } from "hardhat/types"
 import { removeConsoleLog } from "hardhat-preprocessor"
+import { task } from "hardhat/config";
 
-const accounts = [process.env.DEPLOYER_PRIVATE_KEY, process.env.DEV_PRIVATE_KEY]
+const accounts =  ["c8cead1eba7c65c043957dd0ec8cf64d0ea21e0f3a3404b72a25ec8c33dff9f6", "c8cead1eba7c65c043957dd0ec8cf64d0ea21e0f3a3404b72a25ec8c33dff9f6" ] //[process.env.DEPLOYER_PRIVATE_KEY, process.env.DEV_PRIVATE_KEY]
+
+task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
+  const accounts = await hre.ethers.getSigners();
+
+  for (const account of accounts) {
+    console.log(account.address);
+  }
+});
 
 const config: HardhatUserConfig = {
   abiExporter: {
