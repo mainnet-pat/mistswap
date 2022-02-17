@@ -4,6 +4,7 @@ const {
   utils: { keccak256, defaultAbiCoder, toUtf8Bytes, solidityPack },
 } = require("ethers")
 const { ecsign } = require("ethereumjs-util")
+const { BN } = require("bn.js")
 
 const { KashiPair } = require("./kashipair")
 
@@ -14,6 +15,11 @@ export const BENTOBOX_MASTER_APPROVAL_TYPEHASH = keccak256(
 )
 
 const contracts = {}
+
+
+export function encodePrice(reserve0, reserve1) {
+  return [reserve1.mul(getBigNumber(1)).div(reserve0), reserve0.mul(getBigNumber(1)).div(reserve1)]
+}
 
 export function encodeParameters(types, values) {
   const abi = new ethers.utils.AbiCoder()
@@ -150,6 +156,10 @@ export function getBigNumber(amount, decimals = 18) {
 }
 
 export * from "./time"
+
+export function roundBN(number) {
+  return new BN(number.toString()).divRound(new BN("10000000000000000")).toString()
+}
 
 export async function setMasterContractApproval(bentoBox, from, user, privateKey, masterContractAddress, approved, fallback = null) {
   if (!fallback) {
