@@ -1,21 +1,9 @@
 const { weth, getBigNumber } = require("../test/utilities")
 
 module.exports = async function ({ ethers, ...hre }) {
-    const factory_abi = [
-        {
-            inputs: [],
-            name: "pairCodeHash",
-            outputs: [{ internalType: "bytes32", name: "", type: "bytes32" }],
-            stateMutability: "pure",
-            type: "function",
-        },
-    ]
     const [ deployer, funder ] = await ethers.getSigners()
 
     const chainId = await hre.getChainId()
-    // if (chainId == "31337" || hre.network.config.forking) {
-    //     return
-    // }
 
     // console.log("Chain:", chainId)
     // console.log("Balance:", (await funder.getBalance()).div("1000000000000000000").toString())
