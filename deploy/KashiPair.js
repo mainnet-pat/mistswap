@@ -57,8 +57,18 @@ module.exports = async function ({ ethers, ...hre }) {
     }
     
     //Deploy BentoBox
-    const BentoBox = await ethers.getContractFactory("BentoBoxV1");
-    const bentoBox = await BentoBox.deploy(wethAddress)
+    tx = await hre.deployments.deploy("BentoBoxV1", {
+        from: deployer.address,
+        args: [wethAddress],
+        log: true,
+        deterministicDeployment: false,
+        gasLimit: 5500000,
+        gasPrice: finalGasPrice,
+    })
+    bentoBox = await deployments.get("BentoBoxV1")
+
+
+
 
     // console.log("Deploying KashiPair contract, using BentoBox", bentoBox.address)
 

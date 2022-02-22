@@ -219,7 +219,7 @@ describe("SimpleSLPOracle", function () {
             expect(await oracleF.name(oracleData)).to.equal("MistSwap TWAP")
         })
 
-        it("Assigns symbol to S", async function () {
+        it("Assigns symbol to M", async function () {
             expect(await oracleF.symbol(oracleData)).to.equal("M")
         })
     })
