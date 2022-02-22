@@ -12,9 +12,9 @@ import {
 } from "./utilities";
 import { Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { addr, KashiPair } from "./utilities/kashipair";
-import { defaultAbiCoder } from "ethers/lib/utils";
 
+import { defaultAbiCoder } from "ethers/lib/utils";
+import KashiPair from "./utilities/kashipair";
 
 let accounts: SignerWithAddress[] | any;
 
@@ -120,7 +120,7 @@ describe("KashiPair Basic", function () {
         UniswapV2Factory = await ethers.getContractFactory("UniswapV2Factory")
         uniswapV2Factory = await UniswapV2Factory.deploy(alice.address);
         //Creating Pair
-        const createPairTx = await uniswapV2Factory.createPair(addr(tokenA), addr(tokenB))
+        const createPairTx = await uniswapV2Factory.createPair(tokenA.address, tokenB.address)
         pair = (await createPairTx.wait()).events[0].args.pair
 
         //Deploy SushiSwapFactory

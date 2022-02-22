@@ -9,7 +9,6 @@ import {
 } from "../utilities";
 import { Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { addr } from "../utilities/kashipair";
 
 
 let accounts: SignerWithAddress[] | any;
@@ -83,7 +82,7 @@ describe("SimpleSLPOracle", function () {
         UniswapV2Factory = await ethers.getContractFactory("UniswapV2Factory")
         uniswapV2Factory = await UniswapV2Factory.deploy(alice.address);
         //Creating Pair
-        const createPairTx = await uniswapV2Factory.createPair(addr(collateral), addr(asset))
+        const createPairTx = await uniswapV2Factory.createPair(collateral.address, asset.address)
         pair = (await createPairTx.wait()).events[0].args.pair
 
         //Deploy SushiSwapFactory
@@ -132,15 +131,15 @@ describe("SimpleSLPOracle", function () {
     describe("forward oracle", function () {
         describe("name", function () {
             it("should get name", async function () {
-                expect(await oracleF.name(oracleData)).to.be.equal("SushiSwap TWAP")
-                expect(await oracleB.name(oracleData)).to.be.equal("SushiSwap TWAP")
+                expect(await oracleF.name(oracleData)).to.be.equal("MistSwap TWAP")
+                expect(await oracleB.name(oracleData)).to.be.equal("MistSwap TWAP")
             })
         })
 
         describe("symbol", function () {
             it("should get symbol", async function () {
-                expect(await oracleF.symbol(oracleData)).to.be.equal("S")
-                expect(await oracleB.symbol(oracleData)).to.be.equal("S")
+                expect(await oracleF.symbol(oracleData)).to.be.equal("M")
+                expect(await oracleB.symbol(oracleData)).to.be.equal("M")
             })
         })
 
@@ -216,13 +215,12 @@ describe("SimpleSLPOracle", function () {
             })
         })
 
-        it("Assigns name to SushiSwap TWAP", async function () {
-            console.log(await oracleF.name(oracleData))
-            // expect(await oracleF.name(oracleData)).to.equal("SushiSwap TWAP")
+        it("Assigns name to MistSwap TWAP", async function () {
+            expect(await oracleF.name(oracleData)).to.equal("MistSwap TWAP")
         })
 
         it("Assigns symbol to S", async function () {
-            expect(await oracleF.symbol(oracleData)).to.equal("S")
+            expect(await oracleF.symbol(oracleData)).to.equal("M")
         })
     })
 

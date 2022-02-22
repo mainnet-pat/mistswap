@@ -3,14 +3,12 @@ const {
     utils: { keccak256, defaultAbiCoder },
 } = require("ethers")
 const { ecsign } = require("ethereumjs-util")
-
 function addr(address) {
     if (typeof address == "object" && address.address) {
         address = address.address
     }
     return address
-}
-
+  }
 const BENTOBOX_MASTER_APPROVAL_TYPEHASH = keccak256(
     ethers.utils.toUtf8Bytes("SetMasterContractApproval(string warning,address user,address masterContract,bool approved,uint256 nonce)")
 )
@@ -174,8 +172,20 @@ const ACTION_BENTO_SETAPPROVAL = 24;
 // Any external call (except to BentoBox)
 const ACTION_CALL = 30;
 
+
 class KashiPair {
-    constructor(contract, helper) {
+
+    contract: any
+    helper: any
+    address: any
+    bentoBox: any
+    asset: any
+    collateral: any
+    static deploy: (bentoBox: any, masterContract: any, masterContractClass: any, asset: any, collateral: any, oracle: any, oracleData: any) => Promise<KashiPair>
+    initData: any
+    cmd: any
+
+    constructor(contract, helper = undefined) {
         this.contract = contract
         this.helper = helper
         this.address = contract.address
@@ -428,10 +438,9 @@ class KashiPair {
         return this.contract.updateExchangeRate()
     }
 }
-
 Object.defineProperty(KashiPair.prototype, "cmd", {
     get: function () {
-        function proxy(pair, as) {
+        function proxy(pair, as = undefined) {
             return new Proxy(pair, {
                 get: function (target, method) {
                     return function (...params) {
@@ -461,6 +470,8 @@ Object.defineProperty(KashiPair.prototype, "cmd", {
     },
 })
 
+
+
 KashiPair.deploy = async function (bentoBox, masterContract, masterContractClass, asset, collateral, oracle, oracleData) {
     const initData = defaultAbiCoder.encode(["address", "address", "address", "bytes"], [addr(asset), addr(collateral), addr(oracle), oracleData])
     const deployTx = await bentoBox.deploy(masterContract.address, initData, true)
@@ -472,7 +483,4 @@ KashiPair.deploy = async function (bentoBox, masterContract, masterContractClass
     return pairHelper
 }
 
-module.exports = {
-    KashiPair,
-    addr
-}
+export default KashiPair

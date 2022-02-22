@@ -139,11 +139,11 @@ contract SimpleSLPTWAP0Oracle is IOracle {
 
     /// @inheritdoc IOracle
     function name(bytes calldata) public view override returns (string memory) {
-        return "SushiSwap TWAP";
+        return "MistSwap TWAP";
     }
 
     /// @inheritdoc IOracle
     function symbol(bytes calldata) public view override returns (string memory) {
-        return "S";
+        return "M";
     }
 }

@@ -75,6 +75,27 @@ module.exports = async function ({ ethers, ...hre }) {
         (await deployments.get("KashiPairMediumRiskV1")).address
     )
 
+    //Deploy SimpleSLPTWAP0Oracle
+    console.log("Deploying SimpleSLPTWAP0Oracle contract")
+    tx = await hre.deployments.deploy("SimpleSLPTWAP0Oracle", {
+        from: deployer.address,
+        args: [],
+        log: true,
+        deterministicDeployment: false,
+        gasLimit: 1000000,
+        gasPrice: finalGasPrice,
+    })
+
+    console.log("Deploying SimpleSLPTWAP1Oracle contract")
+    tx = await hre.deployments.deploy("SimpleSLPTWAP1Oracle", {
+        from: deployer.address,
+        args: [],
+        log: true,
+        deterministicDeployment: false,
+        gasLimit: 1000000,
+        gasPrice: finalGasPrice,
+    })
+
 
     //Deploy SushiSwapSwapper
     tx = await hre.deployments.deploy("SushiSwapSwapper", {
