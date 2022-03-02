@@ -1,37 +1,40 @@
-const { weth, getBigNumber } = require("../test/utilities")
+const { weth } = require("../test/utilities")
 
 module.exports = async function ({ ethers, ...hre }) {
     const [ deployer, funder ] = await ethers.getSigners()
+    const { deployments: { deploy } } = hre
 
     const chainId = await hre.getChainId()
 
-    // console.log("Chain:", chainId)
-    // console.log("Balance:", (await funder.getBalance()).div("1000000000000000000").toString())
+    
+    console.log("----------- KashiPairMediumRiskV1 --------------")
+    console.log("Chain:", chainId)
+    console.log("Funder Balance:", (await funder.getBalance()).div("1000000000000000000").toString())
     const deployerBalance = await deployer.getBalance()
 
     //Get Sushi Contract
-    const sushi = await ethers.getContract("SushiToken")
+    const sushiContract = await ethers.getContract("SushiToken")
 
     //SushiToken Contract Address
-    let sushiOwner = sushi.address
+    let sushiOwner = sushiContract.address
    
+    //Getting/Setting gas price for deployments
+    const gasPrice = await funder.provider.getGasPrice()
+    const multiplier = hre.network.tags && hre.network.tags.staging ? 2 : 1
+    const finalGasPrice = gasPrice.mul(multiplier)
+    let gasLimit = 5700000
 
-    let gasPrice = await funder.provider.getGasPrice()
-    let multiplier = hre.network.tags && hre.network.tags.staging ? 2 : 1
-    let finalGasPrice = gasPrice.mul(multiplier)
-    gasLimit = 5700000
-    // console.log("Gasprice:", gasPrice.toString(), " with multiplier ", multiplier, "final", finalGasPrice.toString())
+    console.log("Gasprice:", gasPrice.toString(), " with multiplier ", multiplier, "final", finalGasPrice.toString())
 
 
-     //Get UniswapV2Factory Contract
+    //Get UniswapV2Factory Contract
     const uniswapV2Factory = await ethers.getContract("UniswapV2Factory")
     
     //Get WETH9 Address
     let wethAddress = weth(chainId);
     if (chainId == "31337" || hre.network.config.forking) {
-        wethAddress = (await deployments.get("WETH9Mock")).address
+        wethAddress = (await ethers.getContract("WETH9Mock")).address
     }
-
     if (!wethAddress) { //No Weth address found
         return
     }
@@ -39,15 +42,14 @@ module.exports = async function ({ ethers, ...hre }) {
 
 
     //Deployment Part 
-
-
     const initCodeHash = await uniswapV2Factory.pairCodeHash()
-    // console.log("InitCodeHash is", initCodeHash)
-    // console.log("Deployer balance", deployerBalance.toString())
-    // console.log("Needed", finalGasPrice.mul(gasLimit).toString(), finalGasPrice.toString(), gasLimit.toString())
+    console.log("InitCodeHash is", initCodeHash)
+    console.log("Deployer balance", deployerBalance.toString())
+    console.log("Needed", finalGasPrice.mul(gasLimit).toString(), finalGasPrice.toString(), gasLimit.toString())
 
+    //Funding deployer address with funder account
     if (deployerBalance.lt(finalGasPrice.mul(gasLimit))) {
-        // console.log("Sending native token to fund deployment:", finalGasPrice.mul(gasLimit).sub(deployerBalance).toString())
+        console.log("Sending native token to fund deployment:", finalGasPrice.mul(gasLimit).sub(deployerBalance).toString())
         let tx = await funder.sendTransaction({
             to: deployer.address,
             value: finalGasPrice.mul(gasLimit).sub(deployerBalance),
@@ -57,84 +59,87 @@ module.exports = async function ({ ethers, ...hre }) {
     }
     
     //Deploy BentoBox
-    tx = await hre.deployments.deploy("BentoBoxV1", {
+    tx = await deploy("BentoBoxV1", {
         from: deployer.address,
         args: [wethAddress],
         log: true,
         deterministicDeployment: false,
-        gasLimit: 5500000,
+        gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
-    bentoBox = await deployments.get("BentoBoxV1")
 
+    //Getting contracts
+    const bentoBoxContract = await ethers.getContract("BentoBoxV1")
+    const sushiBarContract = await ethers.getContract("SushiBar");
+    const assetTokenContract = await ethers.getContract("AssetToken");
 
-
-
-    // console.log("Deploying KashiPair contract, using BentoBox", bentoBox.address)
-
-    tx = await hre.deployments.deploy("KashiPairMediumRiskV1", {
+    //Deploying Sushi Strategy
+    tx = await deploy("SushiStrategy", {
         from: deployer.address,
-        args: [bentoBox.address],
+        args: [sushiBarContract.address, assetTokenContract.address],
         log: true,
         deterministicDeployment: false,
-        gasLimit: 5500000,
+        gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
 
-    const kashipair = (await ethers.getContractFactory("KashiPairMediumRiskV1")).attach(
-        (await deployments.get("KashiPairMediumRiskV1")).address
-    )
+    //Getting the Strategy Contract
+    const strategyContract = await ethers.getContract("SushiStrategy");
 
-    //Deploy SimpleSLPTWAP0Oracle
-    console.log("Deploying SimpleSLPTWAP0Oracle contract")
-    tx = await hre.deployments.deploy("SimpleSLPTWAP0Oracle", {
+    bentoBoxContract.setStrategy(assetTokenContract.address, strategyContract.address) //Setting bentobox strategy
+    bentoBoxContract.setStrategyTargetPercentage(assetTokenContract.address, 20) //Setting target percentage for the strategy
+
+
+    //Deploying KashiPair contract, using BentoBox
+    console.log("Deploying KashiPair contract, using BentoBox", bentoBoxContract.address)
+
+    tx = await deploy("KashiPairMediumRiskV1", {
         from: deployer.address,
-        args: [],
+        args: [bentoBoxContract.address],
         log: true,
         deterministicDeployment: false,
-        gasLimit: 1000000,
+        gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
 
-    console.log("Deploying SimpleSLPTWAP1Oracle contract")
-    tx = await hre.deployments.deploy("SimpleSLPTWAP1Oracle", {
-        from: deployer.address,
-        args: [],
-        log: true,
-        deterministicDeployment: false,
-        gasLimit: 1000000,
-        gasPrice: finalGasPrice,
-    })
+    const kashiPairContract = await ethers.getContract("KashiPairMediumRiskV1"); 
 
+   
 
     //Deploy SushiSwapSwapper
-    tx = await hre.deployments.deploy("SushiSwapSwapper", {
+    tx = await deploy("SushiSwapSwapper", {
         from: deployer.address,
-        args: [bentoBox.address, uniswapV2Factory.address, initCodeHash],
+        args: [bentoBoxContract.address, uniswapV2Factory.address, initCodeHash],
         log: true,
         deterministicDeployment: false,
-        gasLimit: 5500000,
+        gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
-    const sushiSwapSwapper = (await deployments.get("SushiSwapSwapper"))
+    const sushiSwapSwapperContract = await ethers.getContract("SushiSwapSwapper")
 
-    //console.log("Whitelisting Swapper")
-    tx = await kashipair.connect(deployer).setSwapper(sushiSwapSwapper.address, true, {
-        gasLimit: 100000,
+    console.log("Whitelisting Swapper")
+    tx = await kashiPairContract.connect(deployer).setSwapper(sushiSwapSwapperContract.address, true, {
+        gasLimit: gasLimit,
+        gasPrice: finalGasPrice,
+    })
+
+    console.log("Setting Swapper fee to")
+    tx = await kashiPairContract.connect(deployer).setFeeTo(sushiSwapSwapperContract.address, {
+        gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
     await tx.wait()
 
-    //console.log("Update KashiPair Owner")
-    tx = await kashipair.connect(deployer).transferOwnership(sushiOwner, true, false, {
-        gasLimit: 100000,
+    console.log("Update KashiPair Owner")
+    tx = await kashiPairContract.connect(deployer).transferOwnership(sushiOwner, true, false, {
+        gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
     await tx.wait()
-
+    console.log("----------- KashiPairMediumRiskV1 --------------")
 
 }
 module.exports.tags = ["KashiPairMediumRiskV1"]
-module.exports.dependencies = ["UniswapV2Factory", "UniswapV2Router02", "SushiSwapSwapper" ,"SushiToken", "WETH9Mock"]
+module.exports.dependencies = ["UniswapV2Factory", "UniswapV2Router02", "SushiSwapSwapper" ,"SushiToken","SushiBar", "Mocks"]
 
 

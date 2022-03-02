@@ -37,8 +37,8 @@ let BentoBox: ContractFactory;
 let bentoBox: Contract;
 
 //SushiSwapPair
-let SushiSwapPair, SushiSwapFactory: ContractFactory;
-let sushiSwapPair, sushiSwapFactory: Contract;
+let SushiSwapPair: ContractFactory;
+let sushiSwapPair: Contract;
 
 //UniswapV2Factory
 let UniswapV2Factory: ContractFactory;
@@ -73,6 +73,93 @@ let pairHelper;
 
 let pair;
 
+const addPair = async () => {
+        //Deploy UniswapV2Factory
+        UniswapV2Factory = await ethers.getContractFactory("UniswapV2Factory")
+        uniswapV2Factory = await UniswapV2Factory.deploy(alice.address);
+        await uniswapV2Factory.deployed()
+        //Creating Pair
+        const createPairTx = await uniswapV2Factory.createPair(tokenA.address, tokenB.address)
+        pair = (await createPairTx.wait()).events[0].args.pair
+
+        //Attach Pair to SushiSwapPair
+        SushiSwapPair = await ethers.getContractFactory("UniswapV2Pair");
+        sushiSwapPair = await SushiSwapPair.attach(pair) //Uses only for calling the pair contract methods
+
+        //Adding Amount to Fake Tokens 
+        await tokenA.transfer(pair, getBigNumber(amountA, await tokenA.decimals()))
+        await tokenB.transfer(pair, getBigNumber(amountB, await tokenB.decimals()))//uses to populate the pair with tokens
+
+        //Mint SushiSwapPair
+        await sushiSwapPair.mint(alice.address) //User's addr
+
+}
+const addToken = async () => {
+    //Deploy FakeTokens
+    ReturnFalseERC20Mock = await ethers.getContractFactory("ReturnFalseERC20Mock");
+    RevertingERC20Mock = await ethers.getContractFactory("RevertingERC20Mock");
+    tokenA = await ReturnFalseERC20Mock.deploy("Token A", "A", 18, getBigNumber(1000000, 18));
+    tokenB = await RevertingERC20Mock.deploy("Token B", "B", 8, getBigNumber(1000000, 8));
+    await tokenA.deployed();
+    await tokenB.deployed();
+
+    //Funding Bob Address
+    await tokenA.transfer(bob.address, getBigNumber(1000, 18))
+    await tokenB.transfer(bob.address, getBigNumber(1000, 8))
+    //Funding Carol Address
+    await tokenA.transfer(carol.address, getBigNumber(1000, 18))
+    await tokenB.transfer(carol.address, getBigNumber(1000, 8))
+    //Funding Fred Address
+    await tokenA.transfer(fred.address, getBigNumber(1000, 18))
+    await tokenB.transfer(fred.address, getBigNumber(1000, 8))
+}
+const deployWeth = async () => {
+ //Deploy WETH9
+ WETHToken = await ethers.getContractFactory("WETH9Mock");
+ wethToken = await WETHToken.deploy();
+ await wethToken.deployed();
+}
+const deployBento = async () => {
+     //Deploy BentoBox
+     BentoBox = await ethers.getContractFactory("BentoBoxMock");
+     bentoBox = await BentoBox.deploy(wethToken.address);
+     await bentoBox.deployed();
+}
+
+const deployStrategy = async () => {
+ //Deploy SimpleStrategy
+ SimpleStrategy = await ethers.getContractFactory("SimpleStrategyMock");
+ simpleStrategy = await SimpleStrategy.deploy(bentoBox.address, tokenA.address)
+ await simpleStrategy.deployed();
+}
+const deployERC20 = async () => {
+     //Deploy ERC20
+     ERC20Token = await ethers.getContractFactory("ERC20Mock");
+     erc20Token = await ERC20Token.deploy("erc20", "ERC20Mock", 10000000)
+     await erc20Token.deployed();
+}
+
+const deployKashiPair = async () => {
+   //Deploy KashiPair
+   KashiPairFactory = await ethers.getContractFactory("KashiPairMock");
+   kashiPairContract = await KashiPairFactory.deploy(bentoBox.address)
+   await kashiPairContract.deployed();
+}
+
+
+const deployOracle = async () => {
+    //Deploy Oracle
+    Oracle = await ethers.getContractFactory("OracleMock");
+    oracle = await Oracle.deploy()
+    await oracle.deployed();
+   
+ }
+ const deploySwapper = async () => {
+    //Deploy SushiSwapSwapper
+    SushiSwapSwapper = await ethers.getContractFactory("SushiSwapSwapper");
+    sushiSwapSwapper = await SushiSwapSwapper.deploy(bentoBox.address, uniswapV2Factory.address, await uniswapV2Factory.pairCodeHash())
+    await sushiSwapSwapper.deployed();
+ }
 
 describe("KashiPair Basic", function () {
 
@@ -87,115 +174,43 @@ describe("KashiPair Basic", function () {
         alicePrivateKey = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
         bobPrivateKey = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
         
-        //Deploy WETH9
-        WETHToken = await ethers.getContractFactory("WETH9Mock");
-        wethToken = await WETHToken.deploy();
-        await wethToken.deployed();
+       
 
+        await deployWeth()
+        await deployBento()
 
-        //Deploy BentoBox
-        BentoBox = await ethers.getContractFactory("BentoBoxMock");
-        bentoBox = await BentoBox.deploy(wethToken.address);
-        await bentoBox.deployed();
+        await addToken()
+        await addPair()
+        //Strategy acts like a "middleware" for generical modifications on any erc20token
+        await deployStrategy()
 
-        //Deploy FakeTokens
-        ReturnFalseERC20Mock = await ethers.getContractFactory("ReturnFalseERC20Mock");
-        RevertingERC20Mock = await ethers.getContractFactory("RevertingERC20Mock");
-        tokenA = await ReturnFalseERC20Mock.deploy("Token A", "A", 18, getBigNumber(1000000, 18));
-        tokenB = await RevertingERC20Mock.deploy("Token B", "B", 8, getBigNumber(1000000, 8));
-        await tokenA.deployed();
-        await tokenB.deployed();
-
-        //Funding Bob Address
-        await tokenA.transfer(bob.address, getBigNumber(1000, 18))
-        await tokenB.transfer(bob.address, getBigNumber(1000, 8))
-        //Funding Carol Address
-        await tokenA.transfer(carol.address, getBigNumber(1000, 18))
-        await tokenB.transfer(carol.address, getBigNumber(1000, 8))
-        //Funding Fred Address
-        await tokenA.transfer(fred.address, getBigNumber(1000, 18))
-        await tokenB.transfer(fred.address, getBigNumber(1000, 8))
-
-        //Deploy UniswapV2Factory
-        UniswapV2Factory = await ethers.getContractFactory("UniswapV2Factory")
-        uniswapV2Factory = await UniswapV2Factory.deploy(alice.address);
-        //Creating Pair
-        const createPairTx = await uniswapV2Factory.createPair(tokenA.address, tokenB.address)
-        pair = (await createPairTx.wait()).events[0].args.pair
-
-        //Deploy SushiSwapFactory
-        SushiSwapFactory = await ethers.getContractFactory("SushiSwapFactoryMock");
-        sushiSwapFactory = await SushiSwapFactory.deploy(alice.address)
-        await sushiSwapFactory.deployed();
-
-        //Attach Pair to SushiSwapPair
-        SushiSwapPair = await ethers.getContractFactory("SushiSwapPairMock");
-        sushiSwapPair = await SushiSwapPair.attach(pair)
-        
-        //Adding Amount to Fake Tokens
-        await tokenA.transfer(sushiSwapPair.address, getBigNumber(amountA, await tokenA.decimals()))
-        await tokenB.transfer(sushiSwapPair.address, getBigNumber(amountB, await tokenB.decimals()))
-        
-        //Mint SushiSwapPair
-        await sushiSwapPair.mint(alice.address)
-
-
-
-        //-----------------------END OF FIRST PART------------------------------
-
-
-
-        //-----------------------START OF SECOND PART------------------------------
-
-        //Deploy SimpleStrategy
-        SimpleStrategy = await ethers.getContractFactory("SimpleStrategyMock");
-        simpleStrategy = await SimpleStrategy.deploy(alice.address, tokenA.address)
-        await simpleStrategy.deployed();
+       
 
         //Set Strategy
-        await bentoBox.setStrategy(tokenA.address, simpleStrategy.address)
-        await advanceTime(1209600)
+        // await bentoBox.setStrategy(tokenA.address, simpleStrategy.address)
+        // await advanceTime(1209600)
         await bentoBox.setStrategy(tokenA.address, simpleStrategy.address)
         await bentoBox.setStrategyTargetPercentage(tokenA.address, 20)
 
-        //Deploy ERC20
-        ERC20Token = await ethers.getContractFactory("ERC20Mock");
-        erc20Token = await ERC20Token.deploy("erc20", "ERC20Mock", 10000000)
-        await erc20Token.deployed();
 
-        //Deploy KashiPair
-        KashiPairFactory = await ethers.getContractFactory("KashiPairMock");
-        kashiPairContract = await KashiPairFactory.deploy(bentoBox.address)
-        await kashiPairContract.deployed();
 
-        //Deploy Oracle
-        Oracle = await ethers.getContractFactory("OracleMock");
-        oracle = await Oracle.deploy()
-        await oracle.deployed();
-
-        //Deploy SushiSwapSwapper
-        SushiSwapSwapper = await ethers.getContractFactory("SushiSwapSwapper");
-        sushiSwapSwapper = await SushiSwapSwapper.deploy(bentoBox.address, uniswapV2Factory.address, await uniswapV2Factory.pairCodeHash())
-        await sushiSwapSwapper.deployed();
-
+        // await deployERC20()
+        await deployKashiPair()
+        await deployOracle()
+        await deploySwapper()
         //Setting up swapper, fees and oracle
         await kashiPairContract.setSwapper(sushiSwapSwapper.address, true)
         await kashiPairContract.setFeeTo(alice.address)
-        await oracle.set(getBigNumber(1,28))
-
-       //-----------------------END OF SECOND PART------------------------------
         
-        
-        
-        //-----------------------START OF THIRD PART------------------------------
+        await oracle.set(getBigNumber(1, 28))
+        const oracleData = await oracle.getDataParameter()
 
         //AddKashiPair
-        const oracleData = await oracle.getDataParameter()
         pairHelper = await KashiPair.deploy(bentoBox, kashiPairContract, KashiPairFactory, tokenA, tokenB, oracle, oracleData)
 
 
          // Two different ways to approve the kashiPair
-         await setMasterContractApproval(bentoBox, alice, alice, alicePrivateKey, kashiPairContract.address, true)
+        await setMasterContractApproval(bentoBox, alice, alice, alicePrivateKey, kashiPairContract.address, true)
         await setMasterContractApproval(bentoBox, bob, bob, bobPrivateKey, kashiPairContract.address, true)
         
         
@@ -221,7 +236,9 @@ describe("KashiPair Basic", function () {
        
     })
     describe("Deployment", function () {
+        
         it("Assigns a name", async function () {
+            console.log(sushiSwapPair.address, pair, sushiSwapPair.address === pair)
             expect(await pairHelper.contract.name()).to.be.equal("Kashi Medium Risk Token A/Token B-Test")
         })
         it("Assigns a symbol", async function () {
