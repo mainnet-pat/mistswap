@@ -5,7 +5,6 @@ import {
     advanceBlock,
     advanceTime,
     advanceTimeAndBlock,
-    createSLP,
     deploy,
     getBigNumber,
     prepare,
@@ -81,12 +80,12 @@ describe("KashiPair Basic", function () {
 
         const _pair = (await createPairTx.wait()).events[0].args.pair
       
-        const parzito = await this.UniswapV2Pair.attach(_pair)
+        const sushiSwapPair = await this.UniswapV2Pair.attach(_pair)
       
-        await this.tokenA.transfer(parzito.address, getBigNumber(amountA, 18))
-        await this.tokenB.transfer(parzito.address, getBigNumber(amountB, 8))
+        await this.tokenA.transfer(sushiSwapPair.address, getBigNumber(amountA, 18))
+        await this.tokenB.transfer(sushiSwapPair.address, getBigNumber(amountB, 8))
       
-        await parzito.mint(this.alice.address)
+        await sushiSwapPair.mint(this.alice.address)
 
 
         //Set Strategy (//Strategy acts like a "middleware" for generical modifications on any erc20token)
@@ -137,7 +136,7 @@ describe("KashiPair Basic", function () {
     describe("Deployment", function () {
         
         it("Assigns a name", async function () {
-            // expect(await pairHelper.contract.name()).to.be.equal("Kashi Medium Risk Token A/Token B-Test")
+            expect(await pairHelper.contract.name()).to.be.equal("Kashi Medium Risk Token A/Token B-Test")
         })
         it("Assigns a symbol", async function () {
             expect(await pairHelper.contract.symbol()).to.be.equal("kmA/B-TEST")
