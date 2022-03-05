@@ -83,13 +83,6 @@ module.exports = async function ({ ethers, ...hre }) {
         gasPrice: finalGasPrice,
     })
 
-    //Getting the Strategy Contract
-    const strategyContract = await ethers.getContract("SushiStrategy");
-
-    bentoBoxContract.setStrategy(assetTokenContract.address, strategyContract.address) //Setting bentobox strategy
-    bentoBoxContract.setStrategyTargetPercentage(assetTokenContract.address, 20) //Setting target percentage for the strategy
-
-
     //Deploying KashiPair contract, using BentoBox
     console.log("Deploying KashiPair contract, using BentoBox", bentoBoxContract.address)
 
