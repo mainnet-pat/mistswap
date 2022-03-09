@@ -158,7 +158,7 @@ library BoringERC20 {
         uint256 amount
     ) internal {
         (bool success, bytes memory data) = address(token).call(abi.encodeWithSelector(SIG_TRANSFER_FROM, from, to, amount));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), "BoringERC20: TransferFrom failed");
+        require(success && (data.length == 0 || abi.decode(data, (bool))), "BoringERC20: TransferFrom failed ");
     }
 }
 
