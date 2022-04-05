@@ -500,7 +500,7 @@ contract MasterContractManager is BoringOwnable, BoringFactory {
     }
 
     function _calculateDomainSeparator(uint256 chainId) private view returns (bytes32) {
-        return keccak256(abi.encode(DOMAIN_SEPARATOR_SIGNATURE_HASH, keccak256("BentoBox V1"), chainId, address(this)));
+        return keccak256(abi.encode(DOMAIN_SEPARATOR_SIGNATURE_HASH, keccak256("Mirror V1"), chainId, address(this)));
     }
 
     // solhint-disable-next-line func-name-mixedcase
@@ -575,8 +575,8 @@ contract MasterContractManager is BoringOwnable, BoringFactory {
                             abi.encode(
                                 APPROVAL_SIGNATURE_HASH,
                                 approved
-                                    ? keccak256("Give FULL access to funds in (and approved to) BentoBox?")
-                                    : keccak256("Revoke access to BentoBox?"),
+                                    ? keccak256("Give FULL access to funds in (and approved to) Mirror?")
+                                    : keccak256("Revoke access to Mirror?"),
                                 user,
                                 masterContract,
                                 approved,

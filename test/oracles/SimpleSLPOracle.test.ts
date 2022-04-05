@@ -138,8 +138,8 @@ describe("SimpleSLPOracle", function () {
 
         describe("symbol", function () {
             it("should get symbol", async function () {
-                expect(await oracleF.symbol(oracleData)).to.be.equal("M")
-                expect(await oracleB.symbol(oracleData)).to.be.equal("M")
+                expect(await oracleF.symbol(oracleData)).to.be.equal("MTWAP")
+                expect(await oracleB.symbol(oracleData)).to.be.equal("MTWAP")
             })
         })
 
@@ -220,7 +220,7 @@ describe("SimpleSLPOracle", function () {
         })
 
         it("Assigns symbol to M", async function () {
-            expect(await oracleF.symbol(oracleData)).to.equal("M")
+            expect(await oracleF.symbol(oracleData)).to.equal("MTWAP")
         })
     })
 

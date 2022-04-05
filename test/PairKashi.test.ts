@@ -136,10 +136,10 @@ describe("KashiPair Basic", function () {
     describe("Deployment", function () {
         
         it("Assigns a name", async function () {
-            expect(await pairHelper.contract.name()).to.be.equal("Kashi Medium Risk Token A/Token B-Test")
+            expect(await pairHelper.contract.name()).to.be.equal("MistLend Medium Risk Token A/Token B-Test")
         })
         it("Assigns a symbol", async function () {
-            expect(await pairHelper.contract.symbol()).to.be.equal("kmA/B-TEST")
+            expect(await pairHelper.contract.symbol()).to.be.equal("mlA/B-TEST")
         })
 
         it("Assigns decimals", async function () {

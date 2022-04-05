@@ -837,11 +837,11 @@ contract KashiPairMediumRiskV1 is ERC20, BoringOwnable, IMasterContract {
 
     // ERC20 'variables'
     function symbol() external view returns (string memory) {
-        return string(abi.encodePacked("km", collateral.safeSymbol(), "/", asset.safeSymbol(), "-", oracle.symbol(oracleData)));
+        return string(abi.encodePacked("ml", collateral.safeSymbol(), "/", asset.safeSymbol(), "-", oracle.symbol(oracleData)));
     }
 
     function name() external view returns (string memory) {
-        return string(abi.encodePacked("Kashi Medium Risk ", collateral.safeName(), "/", asset.safeName(), "-", oracle.name(oracleData)));
+        return string(abi.encodePacked("MistLend Medium Risk ", collateral.safeName(), "/", asset.safeName(), "-", oracle.name(oracleData)));
     }
 
     function decimals() external view returns (uint8) {

@@ -144,6 +144,6 @@ contract SimpleSLPTWAP1Oracle is IOracle {
 
     /// @inheritdoc IOracle
     function symbol(bytes calldata) public view override returns (string memory) {
-        return "M";
+        return "MTWAP";
     }
 }

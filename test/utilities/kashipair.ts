@@ -19,7 +19,7 @@ function getBentoBoxDomainSeparator(address, chainId) {
             ["bytes32", "bytes32", "uint256", "address"],
             [
                 keccak256(ethers.utils.toUtf8Bytes("EIP712Domain(string name,uint256 chainId,address verifyingContract)")),
-                keccak256(ethers.utils.toUtf8Bytes("BentoBox V1")),
+                keccak256(ethers.utils.toUtf8Bytes("Mirror V1")),
                 chainId,
                 address,
             ]
@@ -33,7 +33,7 @@ function getBentoBoxApprovalDigest(bentoBox, user, masterContractAddress, approv
         ["bytes32", "bytes32", "address", "address", "bool", "uint256"],
         [
             BENTOBOX_MASTER_APPROVAL_TYPEHASH,
-            keccak256(ethers.utils.toUtf8Bytes(approved ? "Give FULL access to funds in (and approved to) BentoBox?" : "Revoke access to BentoBox?")),
+            keccak256(ethers.utils.toUtf8Bytes(approved ? "Give FULL access to funds in (and approved to) Mirror?" : "Revoke access to Mirror?")),
             user.address,
             masterContractAddress,
             approved,
