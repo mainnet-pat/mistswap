@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@boringcrypto/boring-solidity": "boringcrypto/BoringSolidity#e06e943",
-    "@mistswapdex/sdk": "^0.0.11",
+    "@mistswapdex/sdk": "^0.0.18",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.1",
     "@nomiclabs/hardhat-ganache": "^2.0.1",
@@ -53,7 +53,7 @@
     "@typechain/ethers-v5": "^5.0.0",
     "@types/mocha": "^8.2.1",
     "@types/node": "^14.14.31",
-    "@uniswap/v2-core": "git://github.com/uniswap/uniswap-v2-core.git#27f6354bae6685612c182c3bc7577e61bc8717e3",
+    "@uniswap/v2-core": "https://github.com/uniswap/uniswap-v2-core.git#27f6354bae6685612c182c3bc7577e61bc8717e3",
     "chai": "^4.2.0",
     "cross-env": "^7.0.0",
     "dotenv": "^8.2.0",

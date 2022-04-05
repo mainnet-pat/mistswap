@@ -908,10 +908,10 @@
     tweetnacl "^1.0.3"
     tweetnacl-util "^0.15.1"
 
-"@mistswapdex/sdk@^0.0.11":
-  version "0.0.11"
-  resolved "https://registry.yarnpkg.com/@mistswapdex/sdk/-/sdk-0.0.11.tgz#b951dec9da12d701ebe4a03a5e7a7639450ae3bd"
-  integrity sha512-P8yWH41ReWnK/XarXtPLgKYUDRKnUpqd8b8SyrRnCKnGbc5jl0dTAQYdXPUJVhRnFQmsYdO+HOiLNT8z6NfOuw==
+"@mistswapdex/sdk@^0.0.18":
+  version "0.0.18"
+  resolved "https://registry.yarnpkg.com/@mistswapdex/sdk/-/sdk-0.0.18.tgz#2d18aec65c738556c3dce029dfcf8ff86027e35b"
+  integrity sha512-45KgZpgYR2Cc7MEVtLyJ4SYjHWrInuNJAeXBi3s/OrTf7zPoyuxTeP+WsRt/mudhQI7iKnuYqRlutevAqe+fLA==
   dependencies:
     big.js "^6.1.0"
     decimal.js-light "^2.5.0"
@@ -1402,9 +1402,9 @@
     "@types/bn.js" "*"
     "@types/underscore" "*"
 
-"@uniswap/v2-core@git://github.com/uniswap/uniswap-v2-core.git#27f6354bae6685612c182c3bc7577e61bc8717e3":
+"@uniswap/v2-core@https://github.com/uniswap/uniswap-v2-core.git#27f6354bae6685612c182c3bc7577e61bc8717e3":
   version "1.0.0-beta.0"
-  resolved "git://github.com/uniswap/uniswap-v2-core.git#27f6354bae6685612c182c3bc7577e61bc8717e3"
+  resolved "https://github.com/uniswap/uniswap-v2-core.git#27f6354bae6685612c182c3bc7577e61bc8717e3"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
