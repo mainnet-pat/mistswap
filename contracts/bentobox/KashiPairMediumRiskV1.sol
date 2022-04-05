@@ -1119,6 +1119,8 @@ contract KashiPairMediumRiskV1 is ERC20, BoringOwnable, IMasterContract {
 
     /// @dev Concrete implementation of `borrow`.
     function _borrow(address to, uint256 amount) internal returns (uint256 part, uint256 share) {
+        updateExchangeRate();
+
         uint256 feeAmount = amount.mul(BORROW_OPENING_FEE) / BORROW_OPENING_FEE_PRECISION; // A flat % fee is charged for any borrow
 
         (totalBorrow, part) = totalBorrow.add(amount.add(feeAmount), true);
