@@ -72,6 +72,7 @@ export async function createSLP(thisObject, name, tokenA, tokenB, amount) {
 export function weth(chainId) {
   return {
       10000: "0x3743eC0673453E5009310C727Ba4eaF7b3a1cc04", // Mainnet
+      10001: "0x17F4FCF5b6E0A95D4eE331c8529041896A073F9b",
       31337: "", // Hardhat
 
   }[chainId.toString()]
@@ -114,7 +115,7 @@ function getBentoBoxApprovalDigest(bentoBox, user, masterContractAddress, approv
       ["bytes32", "bytes32", "address", "address", "bool", "uint256"],
       [
           BENTOBOX_MASTER_APPROVAL_TYPEHASH,
-          keccak256(toUtf8Bytes(approved ? "Give FULL access to funds in (and approved to) BentoBox?" : "Revoke access to BentoBox?")),
+          keccak256(toUtf8Bytes(approved ? "Give FULL access to funds in (and approved to) Mirror?" : "Revoke access to Mirror?")),
           user.address,
           masterContractAddress,
           approved,
@@ -128,7 +129,7 @@ function getBentoBoxDomainSeparator(address, chainId) {
   return keccak256(
       defaultAbiCoder.encode(
           ["bytes32", "bytes32", "uint256", "address"],
-          [keccak256(toUtf8Bytes("EIP712Domain(string name,uint256 chainId,address verifyingContract)")), keccak256(toUtf8Bytes("BentoBox V1")), chainId, address]
+          [keccak256(toUtf8Bytes("EIP712Domain(string name,uint256 chainId,address verifyingContract)")), keccak256(toUtf8Bytes("Mirror V1")), chainId, address]
       )
   )
 }

@@ -1,7 +1,10 @@
 const { weth } = require("../test/utilities")
 
 module.exports = async function ({ ethers, ...hre }) {
-    const [ deployer, funder ] = await ethers.getSigners()
+    const { deployer } = await ethers.getNamedSigners()
+    const { dev } = await getNamedAccounts();
+
+    const funder = deployer;
     const { deployments: { deploy } } = hre
 
     const chainId = await hre.getChainId()
@@ -71,12 +74,11 @@ module.exports = async function ({ ethers, ...hre }) {
     //Getting contracts
     const bentoBoxContract = await ethers.getContract("BentoBoxV1")
     const sushiBarContract = await ethers.getContract("SushiBar");
-    const assetTokenContract = await ethers.getContract("AssetToken");
 
     //Deploying Sushi Strategy
     tx = await deploy("SushiStrategy", {
         from: deployer.address,
-        args: [sushiBarContract.address, assetTokenContract.address],
+        args: [sushiBarContract.address, sushiContract.address],
         log: true,
         deterministicDeployment: false,
         gasLimit: gasLimit,
@@ -110,14 +112,18 @@ module.exports = async function ({ ethers, ...hre }) {
     })
     const sushiSwapSwapperContract = await ethers.getContract("SushiSwapSwapper")
 
+    // do not reconfigure
+    if (tx.skipped)
+        return;
+
     console.log("Whitelisting Swapper")
     tx = await kashiPairContract.connect(deployer).setSwapper(sushiSwapSwapperContract.address, true, {
         gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
 
-    console.log("Setting Swapper fee to")
-    tx = await kashiPairContract.connect(deployer).setFeeTo(sushiSwapSwapperContract.address, {
+    console.log("Setting Swapper fee to dev")
+    tx = await kashiPairContract.connect(deployer).setFeeTo(dev, {
         gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
@@ -133,6 +139,7 @@ module.exports = async function ({ ethers, ...hre }) {
 
 }
 module.exports.tags = ["KashiPairMediumRiskV1"]
-module.exports.dependencies = ["UniswapV2Factory", "UniswapV2Router02", "SushiSwapSwapper" ,"SushiToken","SushiBar", "Mocks"]
+module.exports.dependencies = ["UniswapV2Factory", "UniswapV2Router02", "SushiSwapSwapper",
+                               "SushiToken", "SushiBar", "Mocks"]
 
 
