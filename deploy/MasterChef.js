@@ -7,7 +7,7 @@ module.exports = async function ({ ethers, deployments, getNamedAccounts }) {
   
   const startBlock = 989239
   const endBlock = startBlock + (15684 * 14) // 15684 is approx blocks per day
-  const { address } = await deploy("MasterChef", {
+  const { address, skipped } = await deploy("MasterChef", {
     from: deployer,
     args: [sushi.address, dev, "100000000000000000000", "0", endBlock],
     log: true,
@@ -26,7 +26,7 @@ module.exports = async function ({ ethers, deployments, getNamedAccounts }) {
   }
 
   const masterChef = await ethers.getContract("MasterChef")
-  if (await masterChef.owner() !== dev) {
+  if (await masterChef.owner() !== dev && !skipped) {
     // Transfer ownership of MasterChef to dev
     console.log("Transfer ownership of MasterChef to dev")
     await (await masterChef.transferOwnership(dev, txOptions)).wait()

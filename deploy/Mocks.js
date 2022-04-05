@@ -32,8 +32,6 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
   //Mint to test address
   AssetToken.mint(fakeUserAddress, getBigNumber(10000)); //Minting 10000 assets to user
   CollateralToken.mint(fakeUserAddress, getBigNumber(10000)); //Minting 10000 collateral to user
-
-
 }
 
 module.exports.skip = ({ getChainId }) =>

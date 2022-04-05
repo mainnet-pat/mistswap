@@ -16,7 +16,7 @@ import "./tasks"
 
 import { HardhatUserConfig } from "hardhat/types"
 import { removeConsoleLog } from "hardhat-preprocessor"
-import { task } from "hardhat/config";
+import { extendEnvironment, task } from "hardhat/config";
 
 const accounts = [process.env.DEPLOYER_PRIVATE_KEY, process.env.DEV_PRIVATE_KEY]
 
@@ -82,7 +82,7 @@ const config: HardhatUserConfig = {
       gasMultiplier: 2,
     },
     "smartbch-amber": {
-      url: "https://moeing.tech:9545",
+      url: "http://moeing.tech:8545",
       accounts,
       chainId: 10001,
       live: true,
@@ -132,5 +132,21 @@ const config: HardhatUserConfig = {
     },
   },
 }
+
+// will force re-use of deployed contracts
+// to redeploy remove artifact from deployments directory
+extendEnvironment(hre => {
+  const original = hre.deployments.deploy;
+  hre.deployments.deploy = async function(name: string, options: any) {
+    const contract = await (hre.ethers as any).getContractOrNull(name);
+    if (contract) {
+      console.log(name, "already deployead at", contract.address)
+      contract.skipped = true
+      contract.wait = async() => {}
+      return contract;
+    }
+    return original(name, options);
+  }
+})
 
 export default config

@@ -21,7 +21,7 @@ module.exports = async function ({ ethers: { getNamedSigner }, getNamedAccounts,
     throw Error("No WETH!")
   }
 
-  await deploy("SushiMaker", {
+  const tx = await deploy("SushiMaker", {
     from: deployer,
     args: [factory.address, bar.address, sushi.address, wethAddress],
     log: true,
@@ -34,7 +34,7 @@ module.exports = async function ({ ethers: { getNamedSigner }, getNamedAccounts,
   }
 
   const maker = await ethers.getContract("SushiMaker")
-  if (await maker.owner() !== dev) {
+  if (await maker.owner() !== dev && !tx.skipped) {
     console.log("Setting maker owner")
     await (await maker.transferOwnership(dev, true, false, txOptions)).wait()
   }
