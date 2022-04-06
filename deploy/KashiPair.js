@@ -9,7 +9,7 @@ module.exports = async function ({ ethers, ...hre }) {
 
     const chainId = await hre.getChainId()
 
-    
+
     console.log("----------- KashiPairMediumRiskV1 --------------")
     console.log("Chain:", chainId)
     console.log("Funder Balance:", (await funder.getBalance()).div("1000000000000000000").toString())
@@ -20,7 +20,7 @@ module.exports = async function ({ ethers, ...hre }) {
 
     //SushiToken Contract Address
     let sushiOwner = sushiContract.address
-   
+
     //Getting/Setting gas price for deployments
     const gasPrice = await funder.provider.getGasPrice()
     const multiplier = hre.network.tags && hre.network.tags.staging ? 2 : 1
@@ -32,7 +32,7 @@ module.exports = async function ({ ethers, ...hre }) {
 
     //Get UniswapV2Factory Contract
     const uniswapV2Factory = await ethers.getContract("UniswapV2Factory")
-    
+
     //Get WETH9 Address
     let wethAddress = weth(chainId);
     if (chainId == "31337" || hre.network.config.forking) {
@@ -60,7 +60,7 @@ module.exports = async function ({ ethers, ...hre }) {
         })
         await tx.wait()
     }
-    
+
     //Deploy BentoBox
     tx = await deploy("BentoBoxV1", {
         from: deployer.address,
@@ -97,9 +97,23 @@ module.exports = async function ({ ethers, ...hre }) {
         gasPrice: finalGasPrice,
     })
 
-    const kashiPairContract = await ethers.getContract("KashiPairMediumRiskV1"); 
+    const kashiPairContract = await ethers.getContract("KashiPairMediumRiskV1");
 
-   
+    if (!tx.skipped) {
+        console.log("Update KashiPair Owner")
+        tx = await kashiPairContract.connect(deployer).transferOwnership(sushiOwner, true, false, {
+            gasLimit: gasLimit,
+            gasPrice: finalGasPrice,
+        })
+        await tx.wait()
+
+        console.log("Setting Kashi fee to dev")
+        tx = await kashiPairContract.connect(deployer).setFeeTo(dev, {
+            gasLimit: gasLimit,
+            gasPrice: finalGasPrice,
+        })
+        await tx.wait()
+    }
 
     //Deploy SushiSwapSwapper
     tx = await deploy("SushiSwapSwapper", {
@@ -113,28 +127,54 @@ module.exports = async function ({ ethers, ...hre }) {
     const sushiSwapSwapperContract = await ethers.getContract("SushiSwapSwapper")
 
     // do not reconfigure
-    if (tx.skipped)
-        return;
+    if (!tx.skipped) {
+        console.log("Whitelisting Swapper")
+        tx = await kashiPairContract.connect(deployer).setSwapper(sushiSwapSwapperContract.address, true, {
+            gasLimit: gasLimit,
+            gasPrice: finalGasPrice,
+        })
+    }
 
-    console.log("Whitelisting Swapper")
-    tx = await kashiPairContract.connect(deployer).setSwapper(sushiSwapSwapperContract.address, true, {
+    //Deploy SushiSwapMultiSwapper
+    tx = await deploy("SushiSwapMultiSwapper", {
+        from: deployer.address,
+        args: [uniswapV2Factory.address, bentoBoxContract.address, initCodeHash],
+        log: true,
+        deterministicDeployment: false,
         gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
+    const sushiSwapMultiSwapperContract = await ethers.getContract("SushiSwapMultiSwapper")
 
-    console.log("Setting Swapper fee to dev")
-    tx = await kashiPairContract.connect(deployer).setFeeTo(dev, {
+    // do not reconfigure
+    if (!tx.skipped) {
+        console.log("Whitelisting SushiSwapMultiSwapper")
+        tx = await kashiPairContract.connect(deployer).setSwapper(sushiSwapMultiSwapperContract.address, true, {
+            gasLimit: gasLimit,
+            gasPrice: finalGasPrice,
+        })
+    }
+
+    //Deploy SushiSwapMultiExactSwapper
+    tx = await deploy("SushiSwapMultiExactSwapper", {
+        from: deployer.address,
+        args: [uniswapV2Factory.address, bentoBoxContract.address, initCodeHash],
+        log: true,
+        deterministicDeployment: false,
         gasLimit: gasLimit,
         gasPrice: finalGasPrice,
     })
-    await tx.wait()
+    const sushiSwapMultiExactSwapperContract = await ethers.getContract("SushiSwapMultiExactSwapper")
 
-    console.log("Update KashiPair Owner")
-    tx = await kashiPairContract.connect(deployer).transferOwnership(sushiOwner, true, false, {
-        gasLimit: gasLimit,
-        gasPrice: finalGasPrice,
-    })
-    await tx.wait()
+    // do not reconfigure
+    if (!tx.skipped) {
+        console.log("Whitelisting SushiSwapMultiExactSwapper")
+        tx = await kashiPairContract.connect(deployer).setSwapper(sushiSwapMultiExactSwapperContract.address, true, {
+            gasLimit: gasLimit,
+            gasPrice: finalGasPrice,
+        })
+    }
+
     console.log("----------- KashiPairMediumRiskV1 --------------")
 
 }

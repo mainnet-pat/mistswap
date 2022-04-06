@@ -1,4 +1,4 @@
-const { WETH9 } = require("@mistswapdex/sdk")
+const { WNATIVE } = require("@mistswapdex/sdk")
 
 module.exports = async function ({ ethers: { getNamedSigner }, getNamedAccounts, deployments }) {
   const { deploy } = deployments
@@ -15,8 +15,8 @@ module.exports = async function ({ ethers: { getNamedSigner }, getNamedAccounts,
   
   if (chainId === '31337') {
     wethAddress = (await deployments.get("WETH9Mock")).address
-  } else if (chainId in WETH9) {
-    wethAddress = WETH9[chainId].address
+  } else if (chainId in WNATIVE) {
+    wethAddress = WNATIVE[chainId].address
   } else {
     throw Error("No WETH!")
   }
