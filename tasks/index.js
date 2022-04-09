@@ -1,6 +1,8 @@
 const { task } = require("hardhat/config")
 
-const { ethers: { constants: { MaxUint256 }}} = require("ethers")
+const { ethers: { constants: { MaxUint256, AddressZero }}} = require("ethers")
+const { WNATIVE_ADDRESS } = require("@mistswapdex/sdk")
+const { keccak256, pack } = require('@ethersproject/solidity')
 
 task("accounts", "Prints the list of accounts", require("./accounts"))
 task("gas-price", "Prints gas price").setAction(async function({ address }, { ethers }) {
@@ -457,3 +459,78 @@ task("maker:serve", "SushiBar serve")
   console.log(`served ${servedCount} of ${allPairsLength}`)
 });
 
+task("lendpair:create", "Create a mistlend pair, powered by a TWAP oracle")
+.addParam("asset", "Asset token address")
+.addParam("collateral", "Collateral token address")
+.setAction(async function ({ asset, collateral }, { ethers, ...hre }, runSuper) {
+  const { dev } = await ethers.getNamedSigners()
+  const { getContract, getContractAt } = ethers;
+
+  const erc20 = await ethers.getContractFactory("UniswapV2ERC20", dev)
+  const assetToken = erc20.attach(asset)
+  const collateralToken = erc20.attach(collateral)
+  console.log(`Deploying ${await assetToken.symbol()}-${await collateralToken.symbol()} MistLend pair`);
+
+  const factory = await getContract("UniswapV2Factory", dev)
+
+  const computePairAddress = async (asset, collateral) => {
+      const params = asset.toLowerCase() < collateral.toLowerCase() ?
+          [asset, collateral] : [collateral, asset]
+      return ethers.utils.getCreate2Address(
+          factory.address,
+          keccak256(['bytes'], [pack(['address', 'address'], params)]),
+          await factory.pairCodeHash()
+      )
+  }
+
+  const pairAddress = await computePairAddress(asset, collateral);
+  const pair = await getContractAt("UniswapV2Pair", pairAddress, dev);
+  console.log(`Liquidity pool pair found: ${pairAddress}`)
+  const token0 = await pair.token0();
+
+  const oracleData = await ethers.utils.defaultAbiCoder.encode(['address'], [pairAddress])
+  const oracleContract = await getContract(token0 == asset ? "SimpleSLPTWAP0Oracle" : "SimpleSLPTWAP1Oracle", dev);
+  const oracleAddress = oracleContract.address;
+  const kashiData = ethers.utils.defaultAbiCoder.encode(
+      ['address', 'address', 'address', 'bytes'],
+      [collateral, asset, oracleAddress, oracleData]
+  )
+
+  const bentoBoxContract = await getContract("BentoBoxV1", dev);
+  const kashiPairContract = await getContract("KashiPairMediumRiskV1", dev);
+  const tx = await bentoBoxContract.deploy(kashiPairContract.address, kashiData, false, { gasLimit: 5700000 });
+  const kashiPair = (await tx.wait()).events[0].args.cloneAddress;
+  console.log("MistLend pair deployed", kashiPair);
+
+  // bootstrap oracle with the first call to update price
+  await oracleContract.get(oracleData);
+});
+
+task("lendpair:create_all", "Create all mistlend pairs for the product launch")
+.setAction(async function ({ }, { ethers, ...hre }, runSuper) {
+  const chainId = await hre.getChainId()
+  const sushiContract = await ethers.getContract("SushiToken");
+  const wethAddress = WNATIVE_ADDRESS[chainId];
+
+  await run("lendpair:create", { asset: wethAddress, collateral: sushiContract.address }) // deploy BCH/MIST
+  await run("lendpair:create", { asset: sushiContract.address, collateral: wethAddress }) // deploy MIST/BCH
+});
+
+task("bentobox:set_sushi_strategy", "Set SushiStrategy for sushi token")
+.setAction(async function ({ }, { ethers, ...hre }, runSuper) {
+  const { dev } = await ethers.getNamedSigners()
+  const { getContract } = ethers;
+
+  const sushiContract = await ethers.getContract("SushiToken");
+  const sushiStrategyContract = await getContract("SushiStrategy");
+  const bentoBoxContract = await getContract("BentoBoxV1", dev);
+
+  const tx = await bentoBoxContract.setStrategy(sushiContract.address, sushiStrategyContract.address);
+  await tx.wait();
+  const pendingStrategyAddress = await bentoBoxContract.pendingStrategy(sushiContract.address);
+  if (pendingStrategyAddress == sushiStrategyContract.address) {
+    console.log('New strategy was set as pending, repeat this call after STRATEGY_DELAY interval');
+  } else if (pendingStrategyAddress == AddressZero) {
+    console.log('New strategy was activated');
+  }
+});
