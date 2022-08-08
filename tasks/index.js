@@ -1,7 +1,7 @@
 const { task } = require("hardhat/config")
 
 const { ethers: { constants: { MaxUint256, AddressZero }}} = require("ethers")
-const { WNATIVE_ADDRESS } = require("@mistswapdex/sdk")
+const { WNATIVE_ADDRESS, BCUSDT_ADDRESS } = require("@mistswapdex/sdk")
 const { keccak256, pack } = require('@ethersproject/solidity')
 
 task("accounts", "Prints the list of accounts", require("./accounts"))
@@ -511,9 +511,13 @@ task("lendpair:create_all", "Create all mistlend pairs for the product launch")
   const chainId = await hre.getChainId()
   const sushiContract = await ethers.getContract("SushiToken");
   const wethAddress = WNATIVE_ADDRESS[chainId];
+  const bcUSDTAddress = BCUSDT_ADDRESS[chainId];
 
-  await run("lendpair:create", { asset: wethAddress, collateral: sushiContract.address }) // deploy BCH/MIST
-  await run("lendpair:create", { asset: sushiContract.address, collateral: wethAddress }) // deploy MIST/BCH
+  // await run("lendpair:create", { asset: wethAddress, collateral: sushiContract.address }) // deploy BCH/MIST
+  // await run("lendpair:create", { asset: sushiContract.address, collateral: wethAddress }) // deploy MIST/BCH
+
+  // await run("lendpair:create", { asset: bcUSDTAddress, collateral: wethAddress }) // deploy bcUSDT/BCH
+  // await run("lendpair:create", { asset: bcUSDTAddress, collateral: sushiContract.address }) // deploy bcUSDT/MIST
 });
 
 task("bentobox:set_sushi_strategy", "Set SushiStrategy for sushi token")
